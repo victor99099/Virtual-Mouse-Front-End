@@ -6,7 +6,7 @@ class InterstitialAdManager {
 
   void loadAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-9161012727067749/1765867914', // Test Ad Unit ID
+      adUnitId: 'ca-app-pub-9161012727067749/1765867914',
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
