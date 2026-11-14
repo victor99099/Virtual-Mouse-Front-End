@@ -68,7 +68,7 @@ class _LandingPageState extends State<LandingPage>
                 },
               ),
               Text(
-                "Wellcome To Virtual Mouse",
+                "Welcome To Virtual Mouse",
                 style: TextStyle(
                     fontSize: 24,
                     color: currentTheme.primaryColor,
