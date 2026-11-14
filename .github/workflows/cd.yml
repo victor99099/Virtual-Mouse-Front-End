@@ -1,4 +1,4 @@
-name: CD - Deploy to Internal Testing
+name: CD - Deploy to Production
 
 on:
   push:
@@ -65,6 +65,6 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: com.wahab.virtualmousemobile
           releaseFiles: build/app/outputs/bundle/release/*.aab
-          track: internal
+          track: production
           status: completed
           whatsNewDirectory: distribution/whatsnew
