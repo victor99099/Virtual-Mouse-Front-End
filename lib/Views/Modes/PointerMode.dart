@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:vector_math/vector_math.dart' as math;
+import 'package:virtualmousemobile/Views/Modes/Widgets/SensitivitySheet.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../Controllers/Keys.dart';
@@ -20,11 +21,11 @@ class PointerModeScreen extends StatefulWidget {
 class _PointerModeScreenState extends State<PointerModeScreen> {
   bool _isChannelClosed = false;
   bool isCursorMovingEnabled = false;
-  double sensitivity = 2;
+  RxDouble sensitivity = 2.0.obs;
   String? connectionStatus;
   StreamSubscription? gyroscopeSubscription;
   DateTime lastMouseMovement = DateTime.now();
-  Timer? _throttleTimer;
+  // Timer? _throttleTimer;
 
   @override
   void initState() {
@@ -57,7 +58,7 @@ class _PointerModeScreenState extends State<PointerModeScreen> {
       if (x.abs() <= thresholdX) x = 0;
       if (y.abs() <= thresholdY) y = 0;
 
-      final data = 'pointer2,${x * sensitivity},${y * sensitivity}';
+      final data = 'pointer2,${x * sensitivity.value},${y * sensitivity.value}';
 
       if (!_isChannelClosed &&
           (x.abs() >= thresholdX || y.abs() >= thresholdY)) {
@@ -76,6 +77,7 @@ class _PointerModeScreenState extends State<PointerModeScreen> {
   Widget build(BuildContext context) {
     final currentTheme = Theme.of(context);
     return Scaffold(
+      bottomSheet: SensitivitySheet(divisions: 1, sensitivity: sensitivity, min: 1, max: 10),
       backgroundColor: currentTheme.canvasColor,
       appBar: AppBar(
           iconTheme: IconThemeData(color: currentTheme.primaryColor),
@@ -128,7 +130,7 @@ class _PointerModeScreenState extends State<PointerModeScreen> {
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 PointerLeftClickButton(channel: widget.channel),
                 VirtualScrollWheel(

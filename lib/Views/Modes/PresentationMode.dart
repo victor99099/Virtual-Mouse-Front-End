@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:vector_math/vector_math.dart' as math;
+import 'package:virtualmousemobile/Views/Modes/Widgets/SensitivitySheet.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../Controllers/Keys.dart';
@@ -20,11 +21,11 @@ class PresentationModeScreen extends StatefulWidget {
 class _PresentationModeScreenState extends State<PresentationModeScreen> {
   bool _isChannelClosed = false;
   bool isCursorMovingEnabled = false;
-  double sensitivity = 2;
+  RxDouble sensitivity = 2.0.obs;
   String? connectionStatus;
   StreamSubscription? gyroscopeSubscription;
   DateTime lastMouseMovement = DateTime.now();
-  Timer? _throttleTimer;
+  // Timer? _throttleTimer;
 
   @override
   void initState() {
@@ -32,6 +33,8 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
     setState(() {
       startGyroscopeListening();
     });
+    sendColor(
+        widget.channel, Get.find<DrawingColorController>().selectedColor.value);
   }
 
   void startGyroscopeListening() {
@@ -59,7 +62,7 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
       if (x.abs() <= thresholdX) x = 0;
       if (y.abs() <= thresholdY) y = 0;
 
-      final data = 'pointer2,${x * sensitivity},${y * sensitivity}';
+      final data = 'pointer2,${x * sensitivity.value},${y * sensitivity.value}';
 
       if (!_isChannelClosed &&
           (x.abs() >= thresholdX || y.abs() >= thresholdY)) {
@@ -79,6 +82,12 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
   Widget build(BuildContext context) {
     final currentTheme = Theme.of(context);
     return Scaffold(
+      bottomSheet: PresentationSensitivitySheet(
+          channel: widget.channel,
+          divisions: 1,
+          sensitivity: sensitivity,
+          min: 1,
+          max: 10),
       backgroundColor: currentTheme.canvasColor,
       appBar: AppBar(
           iconTheme: IconThemeData(color: currentTheme.primaryColor),
@@ -92,49 +101,54 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
                 fontWeight: FontWeight.bold),
           )),
       body: Padding(
-        padding: EdgeInsets.only(top: Get.height * 0.15, left: 20.0, right: 20),
+        padding: EdgeInsets.only(left: 20.0, right: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 40,
+          spacing: 30,
           children: [
-            Center(
-              child: Center(
-                child: ElevatedButton(
-                  style: ButtonStyle(
-                      padding: WidgetStatePropertyAll(EdgeInsets.all(32)),
-                      backgroundColor:
-                          WidgetStatePropertyAll(currentTheme.cardColor),
-                      elevation: WidgetStatePropertyAll(10),
-                      shadowColor:
-                          WidgetStatePropertyAll(currentTheme.primaryColor),
-                      shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                              color: currentTheme.primaryColor, width: 2)))),
-                  onPressed: () {
-                    final message = 'Center';
-                    widget.channel.sink.add(message);
-                  },
-                  child: Text(
-                    "Re Center",
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: currentTheme.primaryColor,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                PointerLeftClickButton(channel: widget.channel),
-                VirtualScrollWheel(
+                PresentationButton(
                   channel: widget.channel,
-                  height: 0.1,
+                  callbackAction: () {
+                    sendStartSlideCommand(widget.channel);
+                  },
+                  name: "Start",
                 ),
-                PointerRightClickButton(channel: widget.channel)
+                PresentationButton(
+                  channel: widget.channel,
+                  callbackAction: () {
+                    sendEndSlideCommand(widget.channel);
+                  },
+                  name: "End",
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                PresentationButton(
+                  channel: widget.channel,
+                  callbackAction: () {
+                    sendPrevSlideCommand(widget.channel);
+                  },
+                  name: "Previous",
+                ),
+                PresentationButton(
+                  channel: widget.channel,
+                  callbackAction: () {
+                    sendNextSlideCommand(widget.channel);
+                  },
+                  name: "Next",
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                DrawingToggleButton(channel: widget.channel),
+                CenterButton(channel: widget.channel)
               ],
             ),
             Row(
@@ -145,7 +159,18 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
                 RedoButton(channel: widget.channel)
               ],
             ),
-            DrawingToggleButton(channel: widget.channel),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PointerLeftClickButton(channel: widget.channel),
+                VirtualScrollWheel(
+                  channel: widget.channel,
+                  height: 0.1,
+                ),
+                PointerRightClickButton(channel: widget.channel)
+              ],
+            ),
           ],
         ),
       ),
@@ -156,7 +181,117 @@ class _PresentationModeScreenState extends State<PresentationModeScreen> {
   void dispose() {
     gyroscopeSubscription?.cancel();
     _isChannelClosed = true;
+    sendStopDrawing(widget.channel);
     super.dispose();
+  }
+}
+
+class PresentationButton extends StatelessWidget {
+  final WebSocketChannel channel;
+  final String name;
+  final GestureTapCallback callbackAction;
+  const PresentationButton(
+      {super.key,
+      required this.callbackAction,
+      required this.channel,
+      required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    RxBool isTapped = false.obs;
+    final currentTheme = Theme.of(context);
+    return GestureDetector(
+      onTapDown: (details) {
+        isTapped.value = true;
+      },
+      onTapUp: (details) {
+        isTapped.value = false;
+      },
+      onTap: callbackAction,
+      child: Obx(
+        () => Container(
+          width: Get.width * 0.394,
+          height: Get.height * 0.1,
+          decoration: BoxDecoration(
+              boxShadow: [
+                isTapped.value
+                    ? BoxShadow(color: currentTheme.primaryColor, blurRadius: 0)
+                    : BoxShadow(
+                        color: currentTheme.primaryColor,
+                        blurRadius: 5,
+                        // offset: Offset(-4, 4),
+                      ),
+              ],
+              color: currentTheme.cardColor,
+              border: Border.all(color: currentTheme.primaryColor),
+              borderRadius: BorderRadius.circular(10),
+              shape: BoxShape.rectangle),
+          child: Center(
+            child: Text(
+              name,
+              style: TextStyle(
+                  fontSize: 18,
+                  color:
+                      isTapped.value ? currentTheme.primaryColor : Colors.white,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CenterButton extends StatelessWidget {
+  final WebSocketChannel channel;
+  const CenterButton({super.key, required this.channel});
+
+  @override
+  Widget build(BuildContext context) {
+    RxBool isTapped = false.obs;
+    final currentTheme = Theme.of(context);
+    return GestureDetector(
+      onTapDown: (details) {
+        isTapped.value = true;
+      },
+      onTapUp: (details) {
+        isTapped.value = false;
+      },
+      onTap: () {
+        final message = 'Center';
+        channel.sink.add(message);
+      },
+      child: Obx(
+        () => Container(
+          width: Get.width * 0.394,
+          height: Get.height * 0.1,
+          decoration: BoxDecoration(
+              boxShadow: [
+                isTapped.value
+                    ? BoxShadow(color: currentTheme.primaryColor, blurRadius: 0)
+                    : BoxShadow(
+                        color: currentTheme.primaryColor,
+                        blurRadius: 5,
+                        // offset: Offset(-4, 4),
+                      ),
+              ],
+              color: currentTheme.cardColor,
+              border: Border.all(color: currentTheme.primaryColor),
+              borderRadius: BorderRadius.circular(10),
+              shape: BoxShape.rectangle),
+          child: Center(
+            child: Text(
+              "Re Center",
+              style: TextStyle(
+                  fontSize: 18,
+                  color:
+                      isTapped.value ? currentTheme.primaryColor : Colors.white,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -219,7 +354,7 @@ class _DrawingToggleButtonState extends State<DrawingToggleButton> {
 
 class UndoButton extends StatelessWidget {
   final WebSocketChannel channel;
-  UndoButton({super.key, required this.channel});
+  const UndoButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +400,7 @@ class UndoButton extends StatelessWidget {
 
 class RedoButton extends StatelessWidget {
   final WebSocketChannel channel;
-  RedoButton({super.key, required this.channel});
+  const RedoButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {

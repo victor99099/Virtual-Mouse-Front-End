@@ -84,6 +84,22 @@ void sendRedoCommand(WebSocketChannel channel) {
   channel.sink.add('redo');
 }
 
+void sendNextSlideCommand(WebSocketChannel channel) {
+  channel.sink.add('slide,next');
+}
+
+void sendPrevSlideCommand(WebSocketChannel channel) {
+  channel.sink.add('slide,prev');
+}
+
+void sendStartSlideCommand(WebSocketChannel channel) {
+  channel.sink.add('slide,start');
+}
+
+void sendEndSlideCommand(WebSocketChannel channel) {
+  channel.sink.add('slide,end');
+}
+
 void sendColor(WebSocketChannel channel, String color) {
   channel.sink.add('changeColor,$color');
 }
@@ -96,12 +112,15 @@ class IndicatorController extends GetxController {
   RxDouble indicatorPosition = 0.0.obs;
 }
 
+class DrawingColorController extends GetxController {
+  RxString selectedColor = "Red".obs;
+}
+
 class VirtualScrollWheel extends StatefulWidget {
   final WebSocketChannel channel;
   final double height;
   const VirtualScrollWheel(
-      {Key? key, required this.height, required this.channel})
-      : super(key: key);
+      {super.key, required this.height, required this.channel});
   @override
   _VirtualScrollWheelState createState() => _VirtualScrollWheelState();
 }
@@ -113,7 +132,7 @@ class _VirtualScrollWheelState extends State<VirtualScrollWheel> {
   //     0.0.obs; // Range from -50 to 50 (you can adjust it)
 
   // Sensitivity for scrolling
-  double _sensitivity = 0.05;
+  final double _sensitivity = 0.05;
   double _previousDx = 0;
   double _previousDy = 0;
 
@@ -182,9 +201,9 @@ class ScrollWheelIndicator extends StatelessWidget {
   final int position;
 
   ScrollWheelIndicator({
-    Key? key,
+    super.key,
     required this.position,
-  }) : super(key: key);
+  });
 
   final IndicatorController indicatorController =
       Get.put(IndicatorController());
@@ -219,7 +238,7 @@ class ScrollWheelIndicator extends StatelessWidget {
 
 class LeftClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  LeftClickButton({super.key, required this.channel});
+  const LeftClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +268,7 @@ class LeftClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.455,
+            width: isTapped.value ? Get.width * 0.44 : Get.width * 0.455,
             height: isTapped.value ? Get.height * 0.095 : Get.height * 0.1,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
@@ -267,7 +286,7 @@ class LeftClickButton extends StatelessWidget {
 
 class RightClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  RightClickButton({super.key, required this.channel});
+  const RightClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +308,7 @@ class RightClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.455,
+            width: isTapped.value ? Get.width * 0.44 : Get.width * 0.455,
             height: isTapped.value ? Get.height * 0.095 : Get.height * 0.1,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
@@ -307,7 +326,7 @@ class RightClickButton extends StatelessWidget {
 
 class PointerLeftClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  PointerLeftClickButton({super.key, required this.channel});
+  const PointerLeftClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +359,7 @@ class PointerLeftClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.394,
+            width: isTapped.value ? Get.width * 0.36 : Get.width * 0.394,
             height: isTapped.value ? Get.height * 0.095 : Get.height * 0.1,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
@@ -359,7 +378,7 @@ class PointerLeftClickButton extends StatelessWidget {
 
 class PointerRightClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  PointerRightClickButton({super.key, required this.channel});
+  const PointerRightClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +403,7 @@ class PointerRightClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.394,
+            width: isTapped.value ? Get.width * 0.36 : Get.width * 0.394,
             height: isTapped.value ? Get.height * 0.095 : Get.height * 0.1,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
@@ -402,7 +421,7 @@ class PointerRightClickButton extends StatelessWidget {
 
 class JoystickLeftClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  JoystickLeftClickButton({super.key, required this.channel});
+  const JoystickLeftClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -435,8 +454,8 @@ class JoystickLeftClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.2,
-            height: isTapped.value ? Get.height * 0.15 : Get.height * 0.2,
+            width: isTapped.value ? Get.width * 0.19 : Get.width * 0.2,
+            height: isTapped.value ? Get.height * 0.19 : Get.height * 0.2,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
                 border: Border.all(color: currentTheme.primaryColor, width: 2),
@@ -454,7 +473,7 @@ class JoystickLeftClickButton extends StatelessWidget {
 
 class JoystickRightClickButton extends StatelessWidget {
   final WebSocketChannel channel;
-  JoystickRightClickButton({super.key, required this.channel});
+  const JoystickRightClickButton({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -479,8 +498,8 @@ class JoystickRightClickButton extends StatelessWidget {
           shadowColor: currentTheme.primaryColor,
           elevation: isTapped.value ? 0 : 10,
           child: Container(
-            width: Get.width * 0.2,
-            height: isTapped.value ? Get.height * 0.15 : Get.height * 0.2,
+            width: isTapped.value ? Get.width * 0.19 : Get.width * 0.2,
+            height: isTapped.value ? Get.height * 0.19 : Get.height * 0.2,
             decoration: BoxDecoration(
                 color: currentTheme.cardColor,
                 border: Border.all(color: currentTheme.primaryColor, width: 2),

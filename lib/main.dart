@@ -2,12 +2,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:virtualmousemobile/Views/LandingScreen/LandingPage.dart';
 
+import 'Controllers/Keys.dart';
 import 'utils/Themes.dart';
 
-void main() {
+void main() async {
+  Get.put(DrawingColorController());
+  WidgetsFlutterBinding.ensureInitialized();
+  await MobileAds.instance.initialize();
   runApp(const MyApp());
 }
 
@@ -28,16 +33,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
-
-
-
-
 // Include TouchpadMode, MotionControlMode, and PointerMode screens as implemented earlier
-
-
-
 
 // class MotionControlModeScreen extends StatefulWidget {
 //   final WebSocketChannel channel;

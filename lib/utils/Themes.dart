@@ -25,12 +25,12 @@ class MyTheme {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
           indicatorColor: AppConstant.primary,
-          labelTextStyle: MaterialStateProperty.all(
+          labelTextStyle: WidgetStateProperty.all(
             const TextStyle(
               color: Colors.black,
             ),
           ),
-          iconTheme: MaterialStateProperty.all(
+          iconTheme: WidgetStateProperty.all(
             const IconThemeData(color: Colors.black),
           ),
         ),
@@ -50,12 +50,12 @@ class MyTheme {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
           indicatorColor: AppConstant.primary,
-          labelTextStyle: MaterialStateProperty.all(
+          labelTextStyle: WidgetStateProperty.all(
             const TextStyle(
               color: Colors.white,
             ),
           ),
-          iconTheme: MaterialStateProperty.all(
+          iconTheme: WidgetStateProperty.all(
             const IconThemeData(color: Colors.white),
           ),
         ),

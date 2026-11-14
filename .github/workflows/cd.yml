@@ -1,0 +1,71 @@
+name: CD - Deploy to Internal Testing
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cd-release
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Play Store
+    runs-on: ubuntu-latest
+    env:
+      PLAY_READY: ${{ secrets.SERVICE_ACCOUNT_JSON != '' }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > android/app/keystore.jks
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Set Build Number
+        run: echo "BUILD_NUMBER=$(( ${{ github.run_number }} + 9 ))" >> $GITHUB_ENV
+
+      - name: Build App Bundle (AAB)
+        env:
+          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build appbundle --release --build-number=${{ env.BUILD_NUMBER }}
+
+      - name: Keep the AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Upload to Play Store
+        if: env.PLAY_READY == 'true'
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: com.wahab.virtualmousemobile
+          releaseFiles: build/app/outputs/bundle/release/*.aab
+          track: internal
+          status: completed
+          changesNotSentForReview: true
+          whatsNewDirectory: distribution/whatsnew

@@ -17,7 +17,7 @@ class KeyData {
 
 class JoystickModeScreen extends StatefulWidget {
   final WebSocketChannel channel;
-  const JoystickModeScreen({Key? key, required this.channel}) : super(key: key);
+  const JoystickModeScreen({super.key, required this.channel});
 
   @override
   State<JoystickModeScreen> createState() => _JoystickModeScreenState();
@@ -42,18 +42,18 @@ class _JoystickModeScreenState extends State<JoystickModeScreen> {
     ],
     [
       KeyData('`', 1, '`', 192),
-      KeyData('1', 1, '1', 49),
-      KeyData('2', 1, '2', 50),
-      KeyData('3', 1, '3', 51),
-      KeyData('4', 1, '4', 52),
-      KeyData('5', 1, '5', 53),
-      KeyData('6', 1, '6', 54),
-      KeyData('7', 1, '7', 55),
-      KeyData('8', 1, '8', 56),
-      KeyData('9', 1, '9', 57),
-      KeyData('0', 1, '0', 48),
-      KeyData('-', 1, '-', 189),
-      KeyData('=', 1, '=', 187),
+      KeyData('1 !', 1, '1', 49),
+      KeyData('2 @', 1, '2', 50),
+      KeyData('3 #', 1, '3', 51),
+      KeyData('4 \$', 1, '4', 52),
+      KeyData('5 %', 1, '5', 53),
+      KeyData('6 ^', 1, '6', 54),
+      KeyData('7 &', 1, '7', 55),
+      KeyData('8 *', 1, '8', 56),
+      KeyData('9 (', 1, '9', 57),
+      KeyData('0 )', 1, '0', 48),
+      KeyData('- _', 1, '-', 189),
+      KeyData('= +', 1, '=', 187),
       KeyData('Backspace', 2, 'backspace', 8)
     ],
     [
@@ -70,7 +70,7 @@ class _JoystickModeScreenState extends State<JoystickModeScreen> {
       KeyData('P', 1, 'p', 80),
       KeyData('[', 1, '[', 219),
       KeyData(']', 1, ']', 221),
-      KeyData('\$', 1.5, '\$',
+      KeyData('\\|', 1.5, '\\',
           188) // Assuming '$' is mapped to 188, adjust if necessary
     ],
     [
@@ -159,7 +159,7 @@ class _JoystickModeScreenState extends State<JoystickModeScreen> {
     if (!_isLoaded) {
       return Scaffold(
         backgroundColor: Colors.black, // Optional: Black screen while waiting
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator(color: currentTheme.primaryColor,)),
       );
     }
     return Stack(
@@ -177,7 +177,7 @@ class _JoystickModeScreenState extends State<JoystickModeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       JoystickLeftClickButton(channel: widget.channel),
@@ -256,6 +256,7 @@ class _JoystickModeScreenState extends State<JoystickModeScreen> {
       DeviceOrientation.portraitDown,
     ]);
     _isChannelClosed = true;
+    Future.delayed(Duration(seconds: 1));
 
     super.dispose();
   }
@@ -265,7 +266,7 @@ class KeyWidget extends StatelessWidget {
   final WebSocketChannel webSocketChannel;
   final KeyData keyData;
 
-  KeyWidget({required this.keyData, required this.webSocketChannel});
+  KeyWidget({super.key, required this.keyData, required this.webSocketChannel});
   final modifiers = ['shift', 'control', 'alt'];
   @override
   Widget build(BuildContext context) {

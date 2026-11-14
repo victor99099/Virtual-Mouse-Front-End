@@ -9,7 +9,7 @@ import '../../Controllers/Keys.dart';
 
 class TouchpadModeScreen extends StatefulWidget {
   final WebSocketChannel channel;
-  const TouchpadModeScreen({Key? key, required this.channel}) : super(key: key);
+  const TouchpadModeScreen({super.key, required this.channel});
 
   @override
   _TouchpadModeScreenState createState() => _TouchpadModeScreenState();
@@ -184,7 +184,7 @@ class _TouchpadModeScreenState extends State<TouchpadModeScreen> {
             padding: const EdgeInsets.only(left: 16.0, right: 16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 LeftClickButton(channel: widget.channel),
                 RightClickButton(channel: widget.channel)
